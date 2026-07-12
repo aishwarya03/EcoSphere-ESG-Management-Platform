@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import { loginSchema } from '../../lib/validation';
 import Field from '../../components/Field';
 import Button from '../../components/Button';
 
@@ -10,15 +13,21 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { identifier: '', password: '' },
+  });
+
+  const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      await login({ identifier, password });
+      await login(data);
       toast.success('Welcome back');
       navigate(location.state?.from?.pathname ?? '/dashboard', { replace: true });
     } catch (error) {
@@ -35,22 +44,20 @@ const Login = () => {
         Sign in to your EcoSphere workspace.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Field
           label="Email or username"
           type="text"
-          required
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
           placeholder="admin@acme.com"
+          error={errors.identifier?.message}
+          {...register('identifier')}
         />
         <Field
           label="Password"
           type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           placeholder="Your password"
+          error={errors.password?.message}
+          {...register('password')}
         />
 
         <Button type="submit" variant="primary" className="w-full" disabled={submitting}>

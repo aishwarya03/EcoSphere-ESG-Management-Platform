@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { ArrowRight, MailWarning } from 'lucide-react';
 import { previewInvite } from '../../api/auth';
 import { useAuth } from '../../context/useAuth';
+import { acceptInviteSchema } from '../../lib/validation';
 import Field from '../../components/Field';
 import Button from '../../components/Button';
 import Spinner from '../../components/Spinner';
@@ -16,8 +19,16 @@ const AcceptInvite = () => {
   const [invite, setInvite] = useState(null);
   const [loadingInvite, setLoadingInvite] = useState(true);
   const [inviteError, setInviteError] = useState(null);
-  const [form, setForm] = useState({ username: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(acceptInviteSchema),
+    defaultValues: { username: '', password: '' },
+  });
 
   useEffect(() => {
     previewInvite(token)
@@ -28,14 +39,10 @@ const AcceptInvite = () => {
       .finally(() => setLoadingInvite(false));
   }, [token]);
 
-  const handleChange = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      await acceptInvite(token, form);
+      await acceptInvite(token, data);
       toast.success('Welcome to EcoSphere');
       navigate('/dashboard');
     } catch (error) {
@@ -76,23 +83,20 @@ const AcceptInvite = () => {
         Set a username and password for <span className="text-ink-200">{invite.email}</span>.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Field
           label="Username"
           type="text"
-          required
-          value={form.username}
-          onChange={handleChange('username')}
           placeholder="employee1"
+          error={errors.username?.message}
+          {...register('username')}
         />
         <Field
           label="Password"
           type="password"
-          required
-          minLength={8}
-          value={form.password}
-          onChange={handleChange('password')}
           placeholder="At least 8 characters"
+          error={errors.password?.message}
+          {...register('password')}
         />
 
         <Button type="submit" variant="primary" className="w-full" disabled={submitting}>

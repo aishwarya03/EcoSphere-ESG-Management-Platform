@@ -1,33 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import { registerSchema } from '../../lib/validation';
 import Field from '../../components/Field';
 import Button from '../../components/Button';
-
-const initialForm = {
-  organizationName: '',
-  name: '',
-  email: '',
-  username: '',
-  password: '',
-};
 
 const Register = () => {
   const { registerOrganization } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      organizationName: '',
+      name: '',
+      email: '',
+      username: '',
+      password: '',
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      await registerOrganization(form);
+      await registerOrganization(data);
       toast.success('Organization created');
       navigate('/dashboard');
     } catch (error) {
@@ -48,47 +53,41 @@ const Register = () => {
         You&apos;ll be the admin for your organization&apos;s ESG workspace.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Field
           label="Organization name"
           type="text"
-          required
-          value={form.organizationName}
-          onChange={handleChange('organizationName')}
           placeholder="Acme Corp"
+          error={errors.organizationName?.message}
+          {...register('organizationName')}
         />
         <Field
           label="Your name"
           type="text"
-          required
-          value={form.name}
-          onChange={handleChange('name')}
           placeholder="Aishwarya"
+          error={errors.name?.message}
+          {...register('name')}
         />
         <Field
           label="Email"
           type="email"
-          required
-          value={form.email}
-          onChange={handleChange('email')}
           placeholder="admin@acme.com"
+          error={errors.email?.message}
+          {...register('email')}
         />
         <Field
           label="Username"
           type="text"
-          required
-          value={form.username}
-          onChange={handleChange('username')}
           placeholder="admin"
+          error={errors.username?.message}
+          {...register('username')}
         />
         <Field
           label="Password"
           type="password"
-          required
-          minLength={8}
-          value={form.password}
-          onChange={handleChange('password')}
           placeholder="At least 8 characters"
+          error={errors.password?.message}
+          {...register('password')}
         />
 
         <Button type="submit" variant="primary" className="w-full" disabled={submitting}>
