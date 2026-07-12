@@ -57,12 +57,9 @@ const ActivitiesTab = ({ isAdmin, myParticipations, onParticipated }) => {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listCsrActivities(), listDepartments(), listCategories('CSR_ACTIVITY')])
-      .then(([actData, deptData, catData]) => {
-        if (cancelled) return;
-        setActivities(Array.isArray(actData) ? actData : []);
-        setDepartments(Array.isArray(deptData) ? deptData : []);
-        setCategories(Array.isArray(catData) ? catData : []);
+    listCsrActivities()
+      .then((actData) => {
+        if (!cancelled) setActivities(Array.isArray(actData) ? actData : []);
       })
       .catch(() => {
         if (!cancelled) toast.error('Could not load CSR activities');
@@ -74,6 +71,23 @@ const ActivitiesTab = ({ isAdmin, myParticipations, onParticipated }) => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    Promise.all([listDepartments(), listCategories('CSR_ACTIVITY')])
+      .then(([deptData, catData]) => {
+        if (cancelled) return;
+        setDepartments(Array.isArray(deptData) ? deptData : []);
+        setCategories(Array.isArray(catData) ? catData : []);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Could not load departments/categories');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   const isEditing = Boolean(editing);
   const {

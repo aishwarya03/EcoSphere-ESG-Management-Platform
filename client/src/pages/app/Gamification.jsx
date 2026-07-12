@@ -64,11 +64,9 @@ const ChallengesTab = ({ isAdmin, myParticipations, onParticipated }) => {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listChallenges(), listCategories('CHALLENGE')])
-      .then(([chData, catData]) => {
-        if (cancelled) return;
-        setChallenges(Array.isArray(chData) ? chData : []);
-        setCategories(Array.isArray(catData) ? catData : []);
+    listChallenges()
+      .then((chData) => {
+        if (!cancelled) setChallenges(Array.isArray(chData) ? chData : []);
       })
       .catch(() => {
         if (!cancelled) toast.error('Could not load challenges');
@@ -80,6 +78,21 @@ const ChallengesTab = ({ isAdmin, myParticipations, onParticipated }) => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    listCategories('CHALLENGE')
+      .then((catData) => {
+        if (!cancelled) setCategories(Array.isArray(catData) ? catData : []);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Could not load categories');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   const isEditing = Boolean(editing);
   const {
