@@ -133,6 +133,7 @@ model Organization {
   rewards            Reward[]
 
   carbonTransactions      CarbonTransaction[]
+  operationalRecords      OperationalRecord[]
   csrActivities           CSRActivity[]
   employeeParticipations  EmployeeParticipation[]
   challenges              Challenge[]
@@ -204,6 +205,7 @@ model Department {
   environmentalGoals EnvironmentalGoal[]
 
   carbonTransactions CarbonTransaction[]
+  operationalRecords OperationalRecord[]
   csrActivities      CSRActivity[]
   audits             Audit[]
   scores             DepartmentScore[]
@@ -441,12 +443,41 @@ model CarbonTransaction {
   createdByUserId String?
   createdByUser   User?   @relation(fields: [createdByUserId], references: [id])
 
+  operationalRecord OperationalRecord?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([departmentId])
   @@index([emissionFactorId])
+}
+
+model OperationalRecord {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  sourceType  EmissionSourceType
+  description String?
+  quantity    Float
+  unit        String
+  recordDate  DateTime
+
+  processed Boolean @default(false)
+
+  carbonTransactionId String?            @unique
+  carbonTransaction   CarbonTransaction? @relation(fields: [carbonTransactionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([departmentId])
+  @@index([processed])
 }
 
 model CSRActivity {

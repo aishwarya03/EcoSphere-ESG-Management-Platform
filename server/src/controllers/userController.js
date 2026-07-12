@@ -36,3 +36,8 @@ export const updateUser = asyncHandler(async (req, res) => {
   const user = await userService.updateUser(req.user.organizationId, req.params.id, req.body);
   sendSuccess(res, 'User updated', user);
 });
+
+export const getMyProfile = asyncHandler(async (req, res) => {
+  const profile = await userService.getMyProfile(req.user.organizationId, req.user.sub);
+  sendSuccess(res, 'My profile', profile);
+});

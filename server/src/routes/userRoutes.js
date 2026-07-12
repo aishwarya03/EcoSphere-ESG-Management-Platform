@@ -35,11 +35,23 @@ const handleImportUpload = (req, res, next) => {
 
 const router = Router();
 
-router.use('/api/users', authMiddleware, requireRole('ADMIN'));
+router.use('/api/users', authMiddleware);
 
-router.post('/api/users/invite', validate(inviteUserSchema), userController.inviteUser);
-router.post('/api/users/import', handleImportUpload, userController.importUsers);
-router.get('/api/users', userController.listUsers);
-router.patch('/api/users/:id', validate(updateUserSchema), userController.updateUser);
+router.get('/api/users/me/profile', userController.getMyProfile);
+
+router.post(
+  '/api/users/invite',
+  requireRole('ADMIN'),
+  validate(inviteUserSchema),
+  userController.inviteUser
+);
+router.post('/api/users/import', requireRole('ADMIN'), handleImportUpload, userController.importUsers);
+router.get('/api/users', requireRole('ADMIN'), userController.listUsers);
+router.patch(
+  '/api/users/:id',
+  requireRole('ADMIN'),
+  validate(updateUserSchema),
+  userController.updateUser
+);
 
 export default router;
