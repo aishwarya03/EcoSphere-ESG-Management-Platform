@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* emerald — primary brand */
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+
+  /* sky — data/tech accent */
+  --color-blue-300: #7dd3fc;
+  --color-blue-400: #38bdf8;
+  --color-blue-500: #0ea5e9;
+
+  /* gold — gamification accent */
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+
+  /* dark navy canvas + surfaces */
+  --color-canvas: #0b1220;
+  --color-surface: #0f172a;
+  --color-surface-raised: #131f38;
+  --color-border-subtle: rgba(248, 250, 252, 0.08);
+  --color-border-strong: rgba(248, 250, 252, 0.16);
+
+  /* off-white text scale on dark */
+  --color-ink-50: #f8fafc;
+  --color-ink-200: #cbd5e1;
+  --color-ink-400: #94a3b8;
+  --color-ink-600: #64748b;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-ink-50);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+}
+
+.glass {
+  background-color: rgba(248, 250, 252, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border-subtle);
+}
