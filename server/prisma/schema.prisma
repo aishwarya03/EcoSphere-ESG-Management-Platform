@@ -27,18 +27,70 @@ enum EntityStatus {
 enum CategoryType {
   CSR_ACTIVITY
   CHALLENGE
+  PRODUCT
+}
+
+enum ProductType {
+  PHYSICAL_GOOD
+  SERVICE
+}
+
+enum ProfileStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum EsgPillar {
+  ENVIRONMENTAL
+  SOCIAL
+  GOVERNANCE
+}
+
+enum EmissionSourceType {
+  PURCHASE
+  MANUFACTURING
+  EXPENSE
+  FLEET
+  ELECTRICITY
+  OTHER
+}
+
+enum GoalStatus {
+  ACTIVE
+  ACHIEVED
+  MISSED
+  ARCHIVED
+}
+
+enum PolicyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum BadgeMetric {
+  XP_TOTAL
+  CHALLENGES_COMPLETED
+  CSR_PARTICIPATIONS_COMPLETED
 }
 
 model Organization {
   id        String   @id @default(cuid())
   name      String
+  type      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users       User[]
-  departments Department[]
-  categories  Category[]
-  esgConfig   ESGConfiguration?
+  users              User[]
+  departments        Department[]
+  categories         Category[]
+  esgConfig          ESGConfiguration?
+  products           Product[]
+  emissionFactors    EmissionFactor[]
+  environmentalGoals EnvironmentalGoal[]
+  esgPolicies        ESGPolicy[]
+  badges             Badge[]
+  rewards            Reward[]
 }
 
 model User {
@@ -87,7 +139,8 @@ model Department {
   parentDepartment   Department?  @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
   childDepartments   Department[] @relation("DepartmentHierarchy")
 
-  employees User[]
+  employees          User[]
+  environmentalGoals EnvironmentalGoal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,6 +158,8 @@ model Category {
   name   String
   type   CategoryType
   status EntityStatus @default(ACTIVE)
+
+  products Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,4 +183,169 @@ model ESGConfiguration {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name        String
+  code        String
+  type        ProductType
+  description String?
+  status      EntityStatus @default(ACTIVE)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  esgProfiles ProductEsgProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model ProductEsgProfile {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  version               Int
+  assessedAt            DateTime      @default(now())
+  carbonFootprintKgCo2e Float?
+  overallScore          Float?
+  notes                 String?
+  status                ProfileStatus @default(DRAFT)
+
+  metrics ProductEsgMetric[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, version])
+  @@index([productId])
+}
+
+model ProductEsgMetric {
+  id        String            @id @default(cuid())
+  profileId String
+  profile   ProductEsgProfile @relation(fields: [profileId], references: [id])
+
+  pillar EsgPillar
+  name   String
+  value  String
+  unit   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+}
+
+model EmissionFactor {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name        String
+  sourceType  EmissionSourceType
+  unit        String
+  co2ePerUnit Float
+
+  validFrom DateTime?
+  validTo   DateTime?
+  source    String?
+
+  status EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model EnvironmentalGoal {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  title         String
+  description   String?
+  targetMetric  String
+  baselineValue Float?
+  targetValue   Float
+  unit          String
+
+  startDate  DateTime
+  targetDate DateTime
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  status GoalStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([departmentId])
+}
+
+model ESGPolicy {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  title         String
+  category      String
+  description   String?
+  version       Int          @default(1)
+  effectiveDate DateTime
+  status        PolicyStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Badge {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name        String
+  description String?
+  icon        String?
+
+  unlockMetric    BadgeMetric
+  unlockThreshold Int
+
+  status EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Reward {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name           String
+  description    String?
+  pointsRequired Int
+  stock          Int
+
+  status EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
 }

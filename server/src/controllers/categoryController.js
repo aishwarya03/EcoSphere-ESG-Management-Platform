@@ -3,7 +3,7 @@ import { sendSuccess } from '../utils/apiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
 
-const VALID_TYPES = ['CSR_ACTIVITY', 'CHALLENGE'];
+const VALID_TYPES = ['CSR_ACTIVITY', 'CHALLENGE', 'PRODUCT'];
 
 export const createCategory = asyncHandler(async (req, res) => {
   const category = await categoryService.createCategory({

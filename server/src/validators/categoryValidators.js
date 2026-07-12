@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(120),
-  type: z.enum(['CSR_ACTIVITY', 'CHALLENGE']),
+  type: z.enum(['CSR_ACTIVITY', 'CHALLENGE', 'PRODUCT']),
 });
 
 export const updateCategorySchema = z

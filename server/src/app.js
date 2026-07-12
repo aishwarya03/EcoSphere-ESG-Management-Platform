@@ -8,6 +8,13 @@ import userRoutes from './routes/userRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import esgConfigRoutes from './routes/esgConfigRoutes.js';
+import organizationRoutes from './routes/organizationRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import emissionFactorRoutes from './routes/emissionFactorRoutes.js';
+import environmentalGoalRoutes from './routes/environmentalGoalRoutes.js';
+import esgPolicyRoutes from './routes/esgPolicyRoutes.js';
+import badgeRoutes from './routes/badgeRoutes.js';
+import rewardRoutes from './routes/rewardRoutes.js';
 
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -26,6 +33,13 @@ app.use(userRoutes);
 app.use(departmentRoutes);
 app.use(categoryRoutes);
 app.use(esgConfigRoutes);
+app.use(organizationRoutes);
+app.use(productRoutes);
+app.use(emissionFactorRoutes);
+app.use(environmentalGoalRoutes);
+app.use(esgPolicyRoutes);
+app.use(badgeRoutes);
+app.use(rewardRoutes);
 
 // 404 Handler
 app.use(notFound);
