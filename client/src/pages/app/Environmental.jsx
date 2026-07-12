@@ -3,13 +3,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Play, Plus, Sparkles } from 'lucide-react';
 import {
   createCarbonTransaction,
   getEmissionsSummaryByDepartment,
   listCarbonTransactions,
   updateCarbonTransaction,
 } from '../../api/carbonTransactions';
+import {
+  listOperationalRecords,
+  processPendingRecords,
+  seedDemoData,
+} from '../../api/operationalRecords';
 import { listDepartments } from '../../api/departments';
 import { listEmissionFactors } from '../../api/emissionFactors';
 import { carbonTransactionSchema } from '../../lib/validation';
@@ -30,24 +35,55 @@ const Environmental = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingRecords, setPendingRecords] = useState([]);
+  const [processing, setProcessing] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [txData, deptData, factorData, summaryData] = await Promise.all([
+      const [txData, deptData, factorData, summaryData, pendingData] = await Promise.all([
         listCarbonTransactions(),
         listDepartments(),
         listEmissionFactors({ status: 'ACTIVE' }),
         getEmissionsSummaryByDepartment(),
+        listOperationalRecords({ processed: false }),
       ]);
       setTransactions(Array.isArray(txData) ? txData : []);
       setDepartments(Array.isArray(deptData) ? deptData : []);
       setFactors(Array.isArray(factorData) ? factorData : []);
       setSummary(Array.isArray(summaryData) ? summaryData : []);
+      setPendingRecords(Array.isArray(pendingData) ? pendingData : []);
     } catch {
       toast.error('Could not load environmental data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeedDemo = async () => {
+    setSeeding(true);
+    try {
+      await seedDemoData();
+      toast.success('Demo operational data seeded');
+      fetchAll();
+    } catch (error) {
+      toast.error(error?.response?.data?.message ?? 'Could not seed demo data');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const handleProcessPending = async () => {
+    setProcessing(true);
+    try {
+      const result = await processPendingRecords();
+      toast.success(`Processed ${result?.processed?.length ?? 0} record(s) into carbon transactions`);
+      fetchAll();
+    } catch (error) {
+      toast.error(error?.response?.data?.message ?? 'Could not process pending records');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -58,13 +94,15 @@ const Environmental = () => {
       listDepartments(),
       listEmissionFactors({ status: 'ACTIVE' }),
       getEmissionsSummaryByDepartment(),
+      listOperationalRecords({ processed: false }),
     ])
-      .then(([txData, deptData, factorData, summaryData]) => {
+      .then(([txData, deptData, factorData, summaryData, pendingData]) => {
         if (cancelled) return;
         setTransactions(Array.isArray(txData) ? txData : []);
         setDepartments(Array.isArray(deptData) ? deptData : []);
         setFactors(Array.isArray(factorData) ? factorData : []);
         setSummary(Array.isArray(summaryData) ? summaryData : []);
+        setPendingRecords(Array.isArray(pendingData) ? pendingData : []);
       })
       .catch(() => {
         if (!cancelled) toast.error('Could not load environmental data');
@@ -124,9 +162,20 @@ const Environmental = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-2xl font-bold text-ink-50">Environmental</h1>
-        <p className="text-sm text-ink-400">Carbon accounting from operational data.</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-ink-50">Environmental</h1>
+          <p className="text-sm text-ink-400">Carbon accounting from operational data.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={handleSeedDemo} disabled={seeding}>
+            <Sparkles size={16} /> {seeding ? 'Seeding...' : 'Seed Demo Data'}
+          </Button>
+          <Button size="sm" variant="primary" onClick={handleProcessPending} disabled={processing || pendingRecords.length === 0}>
+            <Play size={16} />
+            {processing ? 'Processing...' : `Process Pending (${pendingRecords.length})`}
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
