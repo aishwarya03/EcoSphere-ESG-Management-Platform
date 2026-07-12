@@ -23,6 +23,7 @@ import challengeParticipationRoutes from './routes/challengeParticipationRoutes.
 import auditRoutes from './routes/auditRoutes.js';
 import complianceIssueRoutes from './routes/complianceIssueRoutes.js';
 import departmentScoreRoutes from './routes/departmentScoreRoutes.js';
+import operationalRecordRoutes from './routes/operationalRecordRoutes.js';
 
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -56,6 +57,7 @@ app.use(challengeParticipationRoutes);
 app.use(auditRoutes);
 app.use(complianceIssueRoutes);
 app.use(departmentScoreRoutes);
+app.use(operationalRecordRoutes);
 
 // 404 Handler
 app.use(notFound);

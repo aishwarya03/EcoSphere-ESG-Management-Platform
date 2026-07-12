@@ -145,3 +145,49 @@ export const updateUser = async (organizationId, userId, data) => {
 
   return updated;
 };
+
+export const getMyProfile = async (organizationId, userId) => {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, organizationId },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      role: true,
+      status: true,
+      department: { select: { id: true, name: true, code: true } },
+      organization: { select: { id: true, name: true } },
+    },
+  });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const csrParticipations = await prisma.employeeParticipation.findMany({
+    where: { employeeId: userId },
+    select: {
+      id: true,
+      approvalStatus: true,
+      pointsEarned: true,
+      completionDate: true,
+      submittedAt: true,
+      csrActivity: { select: { id: true, title: true, pointsValue: true } },
+    },
+    orderBy: { submittedAt: 'desc' },
+  });
+
+  const challengeParticipations = await prisma.challengeParticipation.findMany({
+    where: { employeeId: userId },
+    select: {
+      id: true,
+      progress: true,
+      approvalStatus: true,
+      xpAwarded: true,
+      submittedAt: true,
+      challenge: { select: { id: true, title: true, xp: true, deadline: true } },
+    },
+    orderBy: { submittedAt: 'desc' },
+  });
+
+  return { ...user, csrParticipations, challengeParticipations };
+};
