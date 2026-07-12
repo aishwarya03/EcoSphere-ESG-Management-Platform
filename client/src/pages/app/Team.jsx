@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { Send, Upload } from 'lucide-react';
 import { importUsers, inviteUser, listUsers } from '../../api/users';
+import { inviteEmailSchema, isXlsxFile } from '../../lib/validation';
 import Card from '../../components/Card';
 import Field from '../../components/Field';
 import Button from '../../components/Button';
@@ -16,10 +19,19 @@ const Team = () => {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  const [email, setEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const {
+    register: registerInvite,
+    handleSubmit: handleInviteSubmit,
+    reset: resetInviteForm,
+    formState: { errors: inviteErrors },
+  } = useForm({
+    resolver: zodResolver(inviteEmailSchema),
+    defaultValues: { email: '' },
+  });
 
   const [file, setFile] = useState(null);
+  const [fileError, setFileError] = useState(null);
   const [importing, setImporting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
@@ -54,13 +66,12 @@ const Team = () => {
     };
   }, []);
 
-  const handleInvite = async (e) => {
-    e.preventDefault();
+  const onInvite = async ({ email }) => {
     setInviting(true);
     try {
       await inviteUser(email);
       toast.success('Invite sent — check the server console for the link');
-      setEmail('');
+      resetInviteForm();
       fetchUsers();
     } catch (error) {
       toast.error(error?.response?.data?.message ?? 'Could not send invite');
@@ -69,9 +80,24 @@ const Team = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    const selected = e.target.files?.[0] ?? null;
+    if (selected && !isXlsxFile(selected)) {
+      setFile(null);
+      setFileError('Please choose a .xlsx file');
+      e.target.value = '';
+      return;
+    }
+    setFileError(null);
+    setFile(selected);
+  };
+
   const handleImport = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file || !isXlsxFile(file)) {
+      setFileError('Please choose a .xlsx file');
+      return;
+    }
     setImporting(true);
     try {
       const result = await importUsers(file);
@@ -98,15 +124,14 @@ const Team = () => {
       <div className="mb-6 grid gap-4 md:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-heading text-sm font-semibold text-ink-50">Invite an employee</h2>
-          <form onSubmit={handleInvite} className="flex items-end gap-3">
+          <form onSubmit={handleInviteSubmit(onInvite)} className="flex items-end gap-3" noValidate>
             <Field
               label="Email"
               type="email"
-              required
               className="flex-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="employee@acme.com"
+              error={inviteErrors.email?.message}
+              {...registerInvite('email')}
             />
             <Button type="submit" variant="primary" disabled={inviting}>
               <Send size={16} /> {inviting ? 'Sending...' : 'Invite'}
@@ -116,14 +141,16 @@ const Team = () => {
 
         <Card>
           <h2 className="mb-4 font-heading text-sm font-semibold text-ink-50">Bulk import (.xlsx)</h2>
-          <form onSubmit={handleImport} className="flex items-end gap-3">
-            <input
-              type="file"
-              accept=".xlsx"
-              required
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="flex-1 text-sm text-ink-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/5 file:px-4 file:py-2 file:text-sm file:font-medium file:text-ink-200 hover:file:bg-white/10"
-            />
+          <form onSubmit={handleImport} className="flex items-end gap-3" noValidate>
+            <div className="flex-1">
+              <input
+                type="file"
+                accept=".xlsx"
+                onChange={handleFileChange}
+                className="w-full text-sm text-ink-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/5 file:px-4 file:py-2 file:text-sm file:font-medium file:text-ink-200 hover:file:bg-white/10"
+              />
+              {fileError && <span className="mt-1 block text-xs text-danger-400">{fileError}</span>}
+            </div>
             <Button type="submit" variant="secondary" disabled={importing || !file}>
               <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
             </Button>
