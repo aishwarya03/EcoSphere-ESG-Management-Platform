@@ -139,7 +139,17 @@ export const esgProfileSchema = z.object({
   metrics: z.array(esgMetricSchema),
 });
 
-const SOURCE_TYPES = ['PURCHASE', 'MANUFACTURING', 'EXPENSE', 'FLEET', 'ELECTRICITY', 'OTHER'];
+export const SOURCE_TYPES = ['PURCHASE', 'MANUFACTURING', 'EXPENSE', 'FLEET', 'ELECTRICITY', 'OTHER'];
+
+export const operationalRecordSchema = z.object({
+  sourceType: z.enum(SOURCE_TYPES),
+  departmentId: optionalId,
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  quantity: z.coerce.number({ invalid_type_error: 'Required' }).positive('Must be greater than 0'),
+  unit: z.string().trim().min(1, 'Required').max(40, 'Too long'),
+  recordDate: z.coerce.date({ invalid_type_error: 'Required' }),
+});
+
 const dateRangeCheck = (from, to) => (data) => {
   if (data[from] && data[to]) return data[from] < data[to];
   return true;

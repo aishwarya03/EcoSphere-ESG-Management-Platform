@@ -11,13 +11,14 @@ import {
   updateCarbonTransaction,
 } from '../../api/carbonTransactions';
 import {
+  createOperationalRecord,
   listOperationalRecords,
   processPendingRecords,
   seedDemoData,
 } from '../../api/operationalRecords';
 import { listDepartments } from '../../api/departments';
 import { listEmissionFactors } from '../../api/emissionFactors';
-import { carbonTransactionSchema } from '../../lib/validation';
+import { carbonTransactionSchema, operationalRecordSchema } from '../../lib/validation';
 import { toDateInputValue } from '../../lib/date';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -160,6 +161,38 @@ const Environmental = () => {
     }
   };
 
+  const [recordModalOpen, setRecordModalOpen] = useState(false);
+  const [recordSubmitting, setRecordSubmitting] = useState(false);
+  const {
+    register: registerRecord,
+    handleSubmit: handleRecordSubmit,
+    reset: resetRecord,
+    formState: { errors: recordErrors },
+  } = useForm({ resolver: zodResolver(operationalRecordSchema) });
+
+  const openRecordModal = () => {
+    resetRecord({ sourceType: 'PURCHASE', departmentId: '', description: '', quantity: '', unit: '', recordDate: '' });
+    setRecordModalOpen(true);
+  };
+
+  const onRecordSubmit = async (data) => {
+    setRecordSubmitting(true);
+    try {
+      const result = await createOperationalRecord(data);
+      toast.success(
+        result?.processed
+          ? 'Record logged and auto-processed into a carbon transaction'
+          : 'Record logged — awaiting a matching emission factor'
+      );
+      setRecordModalOpen(false);
+      fetchAll();
+    } catch (error) {
+      toast.error(error?.response?.data?.message ?? 'Could not log operational record');
+    } finally {
+      setRecordSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -199,6 +232,50 @@ const Environmental = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        )}
+      </Card>
+
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="font-heading text-sm font-semibold text-ink-50">Operational records (pending)</h2>
+          <p className="text-xs text-ink-400">
+            Log raw Purchase/Manufacturing/Expense/Fleet data — auto-converts to a carbon transaction when a matching
+            active emission factor (same source type + unit) exists.
+          </p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={openRecordModal}>
+          <Plus size={16} /> New Record
+        </Button>
+      </div>
+
+      <Card className="mb-6 !p-0 overflow-hidden">
+        {pendingRecords.length === 0 ? (
+          <p className="p-6 text-sm text-ink-400">No pending operational records.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-xs uppercase tracking-wide text-ink-600">
+                <th className="px-6 py-3 font-medium">Date</th>
+                <th className="px-6 py-3 font-medium">Source</th>
+                <th className="px-6 py-3 font-medium">Department</th>
+                <th className="px-6 py-3 font-medium">Quantity</th>
+                <th className="px-6 py-3 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingRecords.map((r) => (
+                <tr key={r.id} className="border-t border-border-subtle">
+                  <td className="px-6 py-3 text-ink-300">{toDateInputValue(r.recordDate)}</td>
+                  <td className="px-6 py-3 text-ink-300">{r.sourceType}</td>
+                  <td className="px-6 py-3 text-ink-300">{r.department?.name ?? 'Org-wide'}</td>
+                  <td className="px-6 py-3 text-ink-300">
+                    {r.quantity} {r.unit}
+                  </td>
+                  <td className="px-6 py-3 text-ink-400">{r.description || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
 
@@ -310,6 +387,64 @@ const Environmental = () => {
 
           <Button type="submit" variant="primary" className="w-full" disabled={submitting}>
             {submitting ? 'Saving...' : isEditing ? 'Save changes' : 'Log transaction'}
+          </Button>
+        </form>
+      </Modal>
+
+      <Modal open={recordModalOpen} onClose={() => setRecordModalOpen(false)} title="New operational record">
+        <form onSubmit={handleRecordSubmit(onRecordSubmit)} className="space-y-4" noValidate>
+          <SelectField label="Source type" error={recordErrors.sourceType?.message} {...registerRecord('sourceType')}>
+            <option value="PURCHASE">Purchase</option>
+            <option value="MANUFACTURING">Manufacturing</option>
+            <option value="EXPENSE">Expense</option>
+            <option value="FLEET">Fleet</option>
+            <option value="ELECTRICITY">Electricity</option>
+            <option value="OTHER">Other</option>
+          </SelectField>
+          <SelectField
+            label="Department (optional)"
+            error={recordErrors.departmentId?.message}
+            {...registerRecord('departmentId')}
+          >
+            <option value="">Organization-wide</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </SelectField>
+          <div className="grid grid-cols-2 gap-4">
+            <Field
+              label="Quantity"
+              type="number"
+              step="any"
+              error={recordErrors.quantity?.message}
+              {...registerRecord('quantity')}
+            />
+            <Field
+              label="Unit"
+              type="text"
+              placeholder="kg, litre, km, kWh..."
+              error={recordErrors.unit?.message}
+              {...registerRecord('unit')}
+            />
+          </div>
+          <Field
+            label="Record date"
+            type="date"
+            error={recordErrors.recordDate?.message}
+            {...registerRecord('recordDate')}
+          />
+          <Field
+            label="Description (optional)"
+            type="text"
+            placeholder="What this record is for"
+            error={recordErrors.description?.message}
+            {...registerRecord('description')}
+          />
+
+          <Button type="submit" variant="primary" className="w-full" disabled={recordSubmitting}>
+            {recordSubmitting ? 'Saving...' : 'Log record'}
           </Button>
         </form>
       </Modal>
