@@ -6,6 +6,7 @@ import authMiddleware from '../middleware/authMiddleware.js';
 import requireRole from '../middleware/requireRole.js';
 import validate from '../middleware/validate.js';
 import { inviteUserSchema } from '../validators/authValidators.js';
+import { updateUserSchema } from '../validators/userValidators.js';
 import AppError from '../utils/AppError.js';
 
 const upload = multer({
@@ -39,5 +40,6 @@ router.use('/api/users', authMiddleware, requireRole('ADMIN'));
 router.post('/api/users/invite', validate(inviteUserSchema), userController.inviteUser);
 router.post('/api/users/import', handleImportUpload, userController.importUsers);
 router.get('/api/users', userController.listUsers);
+router.patch('/api/users/:id', validate(updateUserSchema), userController.updateUser);
 
 export default router;

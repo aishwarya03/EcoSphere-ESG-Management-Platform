@@ -19,13 +19,26 @@ enum UserStatus {
   DISABLED
 }
 
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CategoryType {
+  CSR_ACTIVITY
+  CHALLENGE
+}
+
 model Organization {
   id        String   @id @default(cuid())
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users       User[]
+  departments Department[]
+  categories  Category[]
+  esgConfig   ESGConfiguration?
 }
 
 model User {
@@ -41,6 +54,9 @@ model User {
   role   Role       @default(EMPLOYEE)
   status UserStatus @default(PENDING)
 
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
   inviteTokenHash      String?   @unique
   inviteTokenExpiresAt DateTime?
 
@@ -49,5 +65,67 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  headOfDepartments Department[] @relation("DepartmentHead")
+
   @@index([organizationId])
+  @@index([departmentId])
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name   String
+  code   String
+  status EntityStatus @default(ACTIVE)
+
+  headUserId String?
+  head       User?   @relation("DepartmentHead", fields: [headUserId], references: [id])
+
+  parentDepartmentId String?
+  parentDepartment   Department?  @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  childDepartments   Department[] @relation("DepartmentHierarchy")
+
+  employees User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([parentDepartmentId])
+}
+
+model Category {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name   String
+  type   CategoryType
+  status EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name, type])
+  @@index([organizationId])
+}
+
+model ESGConfiguration {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  environmentalWeight Int @default(40)
+  socialWeight        Int @default(30)
+  governanceWeight    Int @default(30)
+
+  autoEmissionCalculation Boolean @default(false)
+  evidenceRequired        Boolean @default(false)
+  badgeAutoAward          Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

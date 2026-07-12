@@ -10,13 +10,21 @@ const buildInviteUrl = (rawToken) => {
   return `${base}/accept-invite/${rawToken}`;
 };
 
-const createPendingUser = async ({ email, organizationId, organizationName }) => {
+const assertDepartmentInOrg = async (organizationId, departmentId) => {
+  const department = await prisma.department.findFirst({ where: { id: departmentId, organizationId } });
+  if (!department) {
+    throw new AppError('departmentId does not reference a department in this organization', 422);
+  }
+};
+
+const createPendingUser = async ({ email, organizationId, organizationName, departmentId }) => {
   const { rawToken, tokenHash } = generateInviteToken();
 
   const user = await prisma.user.create({
     data: {
       organizationId,
       email,
+      departmentId: departmentId ?? null,
       role: 'EMPLOYEE',
       status: 'PENDING',
       inviteTokenHash: tokenHash,
@@ -33,11 +41,13 @@ const createPendingUser = async ({ email, organizationId, organizationName }) =>
   return user;
 };
 
-export const inviteSingleUser = async ({ email, organizationId }) => {
+export const inviteSingleUser = async ({ email, organizationId, departmentId }) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new AppError('A user with that email already exists', 409);
   }
+
+  if (departmentId) await assertDepartmentInOrg(organizationId, departmentId);
 
   const organization = await prisma.organization.findUnique({ where: { id: organizationId } });
 
@@ -45,33 +55,53 @@ export const inviteSingleUser = async ({ email, organizationId }) => {
     email,
     organizationId,
     organizationName: organization.name,
+    departmentId,
   });
 
   return user;
 };
 
-export const importUsers = async ({ emails, organizationId }) => {
+export const importUsers = async ({ rows, organizationId }) => {
   const organization = await prisma.organization.findUnique({ where: { id: organizationId } });
 
-  const uniqueEmails = [...new Set(emails.map((e) => e.trim().toLowerCase()))].filter(Boolean);
+  const departments = await prisma.department.findMany({
+    where: { organizationId },
+    select: { id: true, code: true },
+  });
+  const departmentByCode = new Map(departments.map((d) => [d.code, d.id]));
 
+  const uniqueRows = new Map();
+  for (const row of rows) {
+    if (!uniqueRows.has(row.email)) uniqueRows.set(row.email, row.departmentCode);
+  }
+
+  const emails = [...uniqueRows.keys()];
   const existingUsers = await prisma.user.findMany({
-    where: { email: { in: uniqueEmails } },
+    where: { email: { in: emails } },
     select: { email: true },
   });
   const existingEmails = new Set(existingUsers.map((u) => u.email));
 
-  const toInvite = uniqueEmails.filter((email) => !existingEmails.has(email));
+  const invited = [];
+  const departmentNotFound = [];
 
-  const created = [];
-  for (const email of toInvite) {
-    const user = await createPendingUser({ email, organizationId, organizationName: organization.name });
-    created.push(user);
+  for (const [email, departmentCode] of uniqueRows) {
+    if (existingEmails.has(email)) continue;
+
+    let departmentId = null;
+    if (departmentCode) {
+      departmentId = departmentByCode.get(departmentCode) ?? null;
+      if (!departmentId) departmentNotFound.push(email);
+    }
+
+    await createPendingUser({ email, organizationId, organizationName: organization.name, departmentId });
+    invited.push(email);
   }
 
   return {
-    invited: created.map((u) => u.email),
-    skipped: uniqueEmails.filter((email) => existingEmails.has(email)),
+    invited,
+    skipped: emails.filter((email) => existingEmails.has(email)),
+    departmentNotFound,
   };
 };
 
@@ -86,7 +116,32 @@ export const listOrganizationUsers = async (organizationId) => {
       status: true,
       lastLoginAt: true,
       createdAt: true,
+      department: { select: { id: true, name: true, code: true } },
     },
     orderBy: { createdAt: 'asc' },
   });
+};
+
+export const updateUser = async (organizationId, userId, data) => {
+  const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (data.departmentId) await assertDepartmentInOrg(organizationId, data.departmentId);
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      role: true,
+      status: true,
+      department: { select: { id: true, name: true, code: true } },
+    },
+  });
+
+  return updated;
 };

@@ -20,6 +20,7 @@ export const loginSchema = z.object({
 
 export const inviteUserSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
+  departmentId: z.string().trim().min(1).nullish(),
 });
 
 export const acceptInviteSchema = z.object({

@@ -50,6 +50,10 @@ export const registerOrganization = async ({ organizationName, name, email, user
       },
     });
 
+    await tx.eSGConfiguration.create({
+      data: { organizationId: organization.id },
+    });
+
     return { organization, user };
   });
 

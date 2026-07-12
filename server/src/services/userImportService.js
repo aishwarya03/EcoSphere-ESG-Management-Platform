@@ -2,6 +2,8 @@ import ExcelJS from 'exceljs';
 import AppError from '../utils/AppError.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_HEADER = 'email';
+const DEPARTMENT_CODE_HEADER = 'department code';
 
 const extractCellText = (value) => {
   if (value == null) return '';
@@ -14,7 +16,8 @@ const extractCellText = (value) => {
   return '';
 };
 
-export const parseEmailsFromWorkbook = async (buffer) => {
+// Expects a header row with an "Email" column and an optional "Department Code" column.
+export const parseImportRows = async (buffer) => {
   const workbook = new ExcelJS.Workbook();
 
   try {
@@ -28,19 +31,36 @@ export const parseEmailsFromWorkbook = async (buffer) => {
     throw new AppError('The uploaded workbook has no sheets', 422);
   }
 
-  const emails = [];
-  worksheet.eachRow((row) => {
-    row.eachCell((cell) => {
-      const value = extractCellText(cell.value).trim();
-      if (EMAIL_REGEX.test(value)) {
-        emails.push(value.toLowerCase());
-      }
-    });
+  const headerRow = worksheet.getRow(1);
+  let emailColumn;
+  let departmentCodeColumn;
+  headerRow.eachCell((cell, colNumber) => {
+    const header = extractCellText(cell.value).trim().toLowerCase();
+    if (header === EMAIL_HEADER) emailColumn = colNumber;
+    if (header === DEPARTMENT_CODE_HEADER) departmentCodeColumn = colNumber;
   });
 
-  if (emails.length === 0) {
+  if (!emailColumn) {
+    throw new AppError('The uploaded file must have an "Email" column header in the first row', 422);
+  }
+
+  const rows = [];
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return; // header
+
+    const email = extractCellText(row.getCell(emailColumn).value).trim().toLowerCase();
+    if (!EMAIL_REGEX.test(email)) return;
+
+    const departmentCode = departmentCodeColumn
+      ? extractCellText(row.getCell(departmentCodeColumn).value).trim().toUpperCase()
+      : '';
+
+    rows.push({ email, departmentCode: departmentCode || null });
+  });
+
+  if (rows.length === 0) {
     throw new AppError('No valid email addresses were found in the uploaded file', 422);
   }
 
-  return emails;
+  return rows;
 };
