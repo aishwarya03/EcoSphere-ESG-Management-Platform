@@ -57,3 +57,8 @@ h1, h2, h3, h4 {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-border-subtle);
 }
+
+select option {
+  background-color: var(--color-surface-raised);
+  color: var(--color-ink-50);
+}
