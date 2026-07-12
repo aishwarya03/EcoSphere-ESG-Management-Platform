@@ -66,7 +66,7 @@ const AppLayout = ({ children }) => {
           </div>
           <button
             onClick={logout}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-400 transition-colors hover:bg-white/5 hover:text-danger-400"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-400 transition-colors hover:bg-white/5 hover:text-danger-400"
           >
             <LogOut size={16} /> Log out
           </button>

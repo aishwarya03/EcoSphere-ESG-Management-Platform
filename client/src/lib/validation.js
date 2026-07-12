@@ -63,9 +63,11 @@ export const updateDepartmentSchema = z.object({
   status: z.enum(['ACTIVE', 'INACTIVE']),
 });
 
+export const CATEGORY_TYPES = ['CSR_ACTIVITY', 'CHALLENGE', 'PRODUCT'];
+
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
-  type: z.enum(['CSR_ACTIVITY', 'CHALLENGE']),
+  type: z.enum(CATEGORY_TYPES),
 });
 
 export const updateCategorySchema = z.object({
@@ -88,6 +90,153 @@ export const esgConfigSchema = z
     (data) => data.environmentalWeight + data.socialWeight + data.governanceWeight === 100,
     { message: 'Weights must add up to 100', path: ['governanceWeight'] }
   );
+
+const optionalDate = z.preprocess(emptyToUndefined, z.coerce.date().optional());
+const optionalNumber = z.preprocess(
+  (v) => (v === '' || v === undefined ? undefined : Number(v)),
+  z.number().optional()
+);
+const requiredCode = (max) =>
+  z
+    .string()
+    .trim()
+    .min(1, 'Required')
+    .max(max, 'Too long')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Letters, numbers, "_" and "-" only');
+
+export const organizationSchema = z.object({
+  name: z.string().trim().min(2, 'At least 2 characters').max(120, 'Too long'),
+  type: z.preprocess(emptyToUndefined, z.string().trim().max(80, 'Too long').optional()),
+});
+
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  code: requiredCode(40),
+  type: z.enum(['PHYSICAL_GOOD', 'SERVICE']),
+  categoryId: optionalId,
+  description: z.string().trim().max(2000, 'Too long').optional(),
+});
+export const updateProductSchema = createProductSchema.extend({
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
+export const esgMetricSchema = z.object({
+  pillar: z.enum(['ENVIRONMENTAL', 'SOCIAL', 'GOVERNANCE']),
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  value: z.string().trim().min(1, 'Required').max(255, 'Too long'),
+  unit: z.string().trim().max(40, 'Too long').optional(),
+});
+
+export const esgProfileSchema = z.object({
+  assessedAt: optionalDate,
+  carbonFootprintKgCo2e: optionalNumber,
+  overallScore: z.preprocess(
+    (v) => (v === '' || v === undefined ? undefined : Number(v)),
+    z.number().min(0, 'Min 0').max(100, 'Max 100').optional()
+  ),
+  notes: z.string().trim().max(2000, 'Too long').optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED']),
+  metrics: z.array(esgMetricSchema),
+});
+
+const SOURCE_TYPES = ['PURCHASE', 'MANUFACTURING', 'EXPENSE', 'FLEET', 'ELECTRICITY', 'OTHER'];
+const dateRangeCheck = (from, to) => (data) => {
+  if (data[from] && data[to]) return data[from] < data[to];
+  return true;
+};
+
+export const createEmissionFactorSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+    sourceType: z.enum(SOURCE_TYPES),
+    unit: z.string().trim().min(1, 'Required').max(40, 'Too long'),
+    co2ePerUnit: z.coerce.number({ invalid_type_error: 'Required' }).positive('Must be greater than 0'),
+    validFrom: optionalDate,
+    validTo: optionalDate,
+    source: z.string().trim().max(255, 'Too long').optional(),
+  })
+  .refine(dateRangeCheck('validFrom', 'validTo'), {
+    message: 'Valid from must be before valid to',
+    path: ['validTo'],
+  });
+export const updateEmissionFactorSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+    sourceType: z.enum(SOURCE_TYPES),
+    unit: z.string().trim().min(1, 'Required').max(40, 'Too long'),
+    co2ePerUnit: z.coerce.number({ invalid_type_error: 'Required' }).positive('Must be greater than 0'),
+    validFrom: optionalDate,
+    validTo: optionalDate,
+    source: z.string().trim().max(255, 'Too long').optional(),
+    status: z.enum(['ACTIVE', 'INACTIVE']),
+  })
+  .refine(dateRangeCheck('validFrom', 'validTo'), {
+    message: 'Valid from must be before valid to',
+    path: ['validTo'],
+  });
+
+const environmentalGoalFields = {
+  title: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  targetMetric: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  baselineValue: optionalNumber,
+  targetValue: z.coerce.number({ invalid_type_error: 'Required' }),
+  unit: z.string().trim().min(1, 'Required').max(40, 'Too long'),
+  startDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  targetDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  departmentId: optionalId,
+};
+export const createEnvironmentalGoalSchema = z
+  .object(environmentalGoalFields)
+  .refine(dateRangeCheck('startDate', 'targetDate'), {
+    message: 'Start date must be before target date',
+    path: ['targetDate'],
+  });
+export const updateEnvironmentalGoalSchema = z
+  .object({ ...environmentalGoalFields, status: z.enum(['ACTIVE', 'ACHIEVED', 'MISSED', 'ARCHIVED']) })
+  .refine(dateRangeCheck('startDate', 'targetDate'), {
+    message: 'Start date must be before target date',
+    path: ['targetDate'],
+  });
+
+export const esgPolicySchema = z.object({
+  title: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  category: z.string().trim().min(1, 'Required').max(80, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  effectiveDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+});
+
+const UNLOCK_METRICS = ['XP_TOTAL', 'CHALLENGES_COMPLETED', 'CSR_PARTICIPATIONS_COMPLETED'];
+export const createBadgeSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  icon: z.string().trim().max(80, 'Too long').optional(),
+  unlockMetric: z.enum(UNLOCK_METRICS),
+  unlockThreshold: z.coerce
+    .number({ invalid_type_error: 'Required' })
+    .int('Whole numbers only')
+    .positive('Must be greater than 0'),
+});
+export const updateBadgeSchema = createBadgeSchema.extend({
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
+export const createRewardSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  pointsRequired: z.coerce
+    .number({ invalid_type_error: 'Required' })
+    .int('Whole numbers only')
+    .positive('Must be greater than 0'),
+  stock: z.coerce
+    .number({ invalid_type_error: 'Required' })
+    .int('Whole numbers only')
+    .nonnegative('Cannot be negative'),
+});
+export const updateRewardSchema = createRewardSchema.extend({
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
 
 export const XLSX_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

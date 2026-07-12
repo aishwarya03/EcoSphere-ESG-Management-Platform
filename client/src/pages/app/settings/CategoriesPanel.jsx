@@ -15,6 +15,7 @@ import Spinner from '../../../components/Spinner';
 const typeLabels = {
   CSR_ACTIVITY: 'CSR Activity',
   CHALLENGE: 'Challenge',
+  PRODUCT: 'Product',
 };
 
 const statusStyles = {
@@ -26,6 +27,7 @@ const filters = [
   { value: undefined, label: 'All' },
   { value: 'CSR_ACTIVITY', label: 'CSR Activity' },
   { value: 'CHALLENGE', label: 'Challenge' },
+  { value: 'PRODUCT', label: 'Product' },
 ];
 
 const CategoriesPanel = () => {
@@ -116,7 +118,7 @@ const CategoriesPanel = () => {
             <button
               key={f.label}
               onClick={() => setTypeFilter(f.value)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                 typeFilter === f.value
                   ? 'bg-primary-500/15 text-primary-400'
                   : 'text-ink-400 hover:bg-white/5 hover:text-ink-50'
@@ -163,7 +165,7 @@ const CategoriesPanel = () => {
                   <td className="px-6 py-3 text-right">
                     <button
                       onClick={() => openEdit(c)}
-                      className="rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
                     >
                       <Pencil size={15} />
                     </button>
@@ -197,6 +199,7 @@ const CategoriesPanel = () => {
             <SelectField label="Type" error={errors.type?.message} {...register('type')}>
               <option value="CSR_ACTIVITY">CSR Activity</option>
               <option value="CHALLENGE">Challenge</option>
+              <option value="PRODUCT">Product</option>
             </SelectField>
           )}
 

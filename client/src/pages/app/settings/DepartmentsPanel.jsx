@@ -160,7 +160,7 @@ const DepartmentsPanel = () => {
                   <td className="px-6 py-3 text-right">
                     <button
                       onClick={() => openEdit(d)}
-                      className="rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
                     >
                       <Pencil size={15} />
                     </button>

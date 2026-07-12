@@ -35,7 +35,7 @@ const Modal = ({ open, onClose, title, children }) => {
               <h2 className="font-heading text-lg font-semibold text-ink-50">{title}</h2>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
+                className="cursor-pointer rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-ink-50"
               >
                 <X size={18} />
               </button>
