@@ -13,6 +13,7 @@ import Login from '../pages/auth/Login';
 import AcceptInvite from '../pages/auth/AcceptInvite';
 import Dashboard from '../pages/app/Dashboard';
 import Team from '../pages/app/Team';
+import Settings from '../pages/app/Settings';
 
 const AppRoutes = () => {
   return (
@@ -68,6 +69,16 @@ const AppRoutes = () => {
             <AdminRoute>
               <AppLayout>
                 <Team />
+              </AppLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <AdminRoute>
+              <AppLayout>
+                <Settings />
               </AppLayout>
             </AdminRoute>
           }

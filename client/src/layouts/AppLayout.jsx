@@ -1,10 +1,11 @@
 import { Link, NavLink } from 'react-router-dom';
-import { Leaf, LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { Leaf, LayoutDashboard, Users, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
   { to: '/team', label: 'Team', icon: Users, adminOnly: true },
+  { to: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];
 
 const initials = (name = '') =>

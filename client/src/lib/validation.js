@@ -37,6 +37,58 @@ export const inviteEmailSchema = z.object({
   email,
 });
 
+const emptyToUndefined = (val) => (val === '' ? undefined : val);
+
+const departmentCode = z
+  .string()
+  .trim()
+  .min(1, 'Required')
+  .max(20, 'Must be 20 characters or fewer')
+  .regex(/^[a-zA-Z0-9_-]+$/, 'Letters, numbers, "_" and "-" only');
+
+const optionalId = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+
+export const createDepartmentSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  code: departmentCode,
+  headUserId: optionalId,
+  parentDepartmentId: optionalId,
+});
+
+export const updateDepartmentSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  code: departmentCode,
+  headUserId: optionalId,
+  parentDepartmentId: optionalId,
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
+export const createCategorySchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  type: z.enum(['CSR_ACTIVITY', 'CHALLENGE']),
+});
+
+export const updateCategorySchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
+const weight = z.coerce.number().int('Whole numbers only').min(0, 'Min 0').max(100, 'Max 100');
+
+export const esgConfigSchema = z
+  .object({
+    environmentalWeight: weight,
+    socialWeight: weight,
+    governanceWeight: weight,
+    autoEmissionCalculation: z.boolean(),
+    evidenceRequired: z.boolean(),
+    badgeAutoAward: z.boolean(),
+  })
+  .refine(
+    (data) => data.environmentalWeight + data.socialWeight + data.governanceWeight === 100,
+    { message: 'Weights must add up to 100', path: ['governanceWeight'] }
+  );
+
 export const XLSX_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];

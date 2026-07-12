@@ -101,8 +101,10 @@ const Team = () => {
     setImporting(true);
     try {
       const result = await importUsers(file);
+      const notFoundCount = result.departmentNotFound?.length ?? 0;
       toast.success(
-        `Invited ${result.invited?.length ?? 0}, skipped ${result.skipped?.length ?? 0}`
+        `Invited ${result.invited?.length ?? 0}, skipped ${result.skipped?.length ?? 0}` +
+          (notFoundCount ? `, ${notFoundCount} had an unrecognized department code` : '')
       );
       setFile(null);
       e.target.reset();
@@ -140,7 +142,11 @@ const Team = () => {
         </Card>
 
         <Card>
-          <h2 className="mb-4 font-heading text-sm font-semibold text-ink-50">Bulk import (.xlsx)</h2>
+          <h2 className="mb-1 font-heading text-sm font-semibold text-ink-50">Bulk import (.xlsx)</h2>
+          <p className="mb-3 text-xs text-ink-400">
+            Needs an <span className="text-ink-200">Email</span> column, and optionally a{' '}
+            <span className="text-ink-200">Department Code</span> column.
+          </p>
           <form onSubmit={handleImport} className="flex items-end gap-3" noValidate>
             <div className="flex-1">
               <input
@@ -177,6 +183,7 @@ const Team = () => {
               <tr className="border-t border-border-subtle text-xs uppercase tracking-wide text-ink-600">
                 <th className="px-6 py-3 font-medium">Name</th>
                 <th className="px-6 py-3 font-medium">Email</th>
+                <th className="px-6 py-3 font-medium">Department</th>
                 <th className="px-6 py-3 font-medium">Role</th>
                 <th className="px-6 py-3 font-medium">Status</th>
               </tr>
@@ -186,6 +193,7 @@ const Team = () => {
                 <tr key={u.id} className="border-t border-border-subtle">
                   <td className="px-6 py-3 text-ink-50">{u.name ?? u.username ?? '—'}</td>
                   <td className="px-6 py-3 text-ink-300">{u.email}</td>
+                  <td className="px-6 py-3 text-ink-300">{u.department?.name ?? '—'}</td>
                   <td className="px-6 py-3 text-ink-300">{u.role ?? '—'}</td>
                   <td className="px-6 py-3">
                     <span
