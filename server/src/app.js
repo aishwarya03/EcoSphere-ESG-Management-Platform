@@ -15,6 +15,14 @@ import environmentalGoalRoutes from './routes/environmentalGoalRoutes.js';
 import esgPolicyRoutes from './routes/esgPolicyRoutes.js';
 import badgeRoutes from './routes/badgeRoutes.js';
 import rewardRoutes from './routes/rewardRoutes.js';
+import carbonTransactionRoutes from './routes/carbonTransactionRoutes.js';
+import csrActivityRoutes from './routes/csrActivityRoutes.js';
+import employeeParticipationRoutes from './routes/employeeParticipationRoutes.js';
+import challengeRoutes from './routes/challengeRoutes.js';
+import challengeParticipationRoutes from './routes/challengeParticipationRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
+import complianceIssueRoutes from './routes/complianceIssueRoutes.js';
+import departmentScoreRoutes from './routes/departmentScoreRoutes.js';
 
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -40,6 +48,14 @@ app.use(environmentalGoalRoutes);
 app.use(esgPolicyRoutes);
 app.use(badgeRoutes);
 app.use(rewardRoutes);
+app.use(carbonTransactionRoutes);
+app.use(csrActivityRoutes);
+app.use(employeeParticipationRoutes);
+app.use(challengeRoutes);
+app.use(challengeParticipationRoutes);
+app.use(auditRoutes);
+app.use(complianceIssueRoutes);
+app.use(departmentScoreRoutes);
 
 // 404 Handler
 app.use(notFound);
