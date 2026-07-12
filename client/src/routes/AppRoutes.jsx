@@ -14,6 +14,10 @@ import AcceptInvite from '../pages/auth/AcceptInvite';
 import Dashboard from '../pages/app/Dashboard';
 import Team from '../pages/app/Team';
 import Settings from '../pages/app/Settings';
+import Environmental from '../pages/app/Environmental';
+import Social from '../pages/app/Social';
+import Governance from '../pages/app/Governance';
+import Gamification from '../pages/app/Gamification';
 
 const AppRoutes = () => {
   return (
@@ -59,6 +63,46 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <AppLayout>
                 <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/environmental"
+          element={
+            <AdminRoute>
+              <AppLayout>
+                <Environmental />
+              </AppLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/social"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Social />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/governance"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Governance />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gamification"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Gamification />
               </AppLayout>
             </ProtectedRoute>
           }

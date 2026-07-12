@@ -9,6 +9,7 @@ import EnvironmentalGoalsPanel from './settings/EnvironmentalGoalsPanel';
 import EsgPoliciesPanel from './settings/EsgPoliciesPanel';
 import BadgesPanel from './settings/BadgesPanel';
 import RewardsPanel from './settings/RewardsPanel';
+import DepartmentScoresPanel from './settings/DepartmentScoresPanel';
 
 const groups = [
   {
@@ -18,6 +19,7 @@ const groups = [
       { id: 'departments', label: 'Departments', Panel: DepartmentsPanel },
       { id: 'categories', label: 'Categories', Panel: CategoriesPanel },
       { id: 'esg-config', label: 'ESG Configuration', Panel: EsgConfigPanel },
+      { id: 'scores', label: 'Department Scores', Panel: DepartmentScoresPanel },
     ],
   },
   {

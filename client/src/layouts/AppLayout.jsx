@@ -1,9 +1,22 @@
 import { Link, NavLink } from 'react-router-dom';
-import { Leaf, LayoutDashboard, Users, Settings, LogOut } from 'lucide-react';
+import {
+  Leaf,
+  LayoutDashboard,
+  HandHeart,
+  ShieldCheck,
+  Trophy,
+  Users,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { to: '/environmental', label: 'Environmental', icon: Leaf, adminOnly: true },
+  { to: '/social', label: 'Social', icon: HandHeart, adminOnly: false },
+  { to: '/governance', label: 'Governance', icon: ShieldCheck, adminOnly: false },
+  { to: '/gamification', label: 'Gamification', icon: Trophy, adminOnly: false },
   { to: '/team', label: 'Team', icon: Users, adminOnly: true },
   { to: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];

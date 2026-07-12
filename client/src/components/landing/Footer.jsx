@@ -2,10 +2,13 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf } from 'lucide-react';
 import Button from '../Button';
+import { useAuthCta } from '../../hooks/useAuthCta';
 
 const words = ['Measure.', 'Improve.', 'Sustain.'];
 
 const Footer = () => {
+  const cta = useAuthCta();
+
   return (
     <footer className="relative overflow-hidden border-t border-border-subtle px-6 pt-28 pb-10">
       <div
@@ -20,8 +23,8 @@ const Footer = () => {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6 }}
         >
-          <Button as={Link} to="/register" size="lg" variant="primary">
-            Get Started <ArrowRight size={18} />
+          <Button as={Link} to={cta.to} size="lg" variant="primary">
+            {cta.label} <ArrowRight size={18} />
           </Button>
         </motion.div>
 
