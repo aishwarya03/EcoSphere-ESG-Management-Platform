@@ -3,6 +3,8 @@ import cors from 'cors';
 
 import healthRoutes from './routes/healthRoutes.js';
 import pingRoutes from './routes/pingRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -13,9 +15,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes will go here later
+// Routes
 app.use(healthRoutes);
 app.use(pingRoutes);
+app.use(authRoutes);
+app.use(userRoutes);
 
 // 404 Handler
 app.use(notFound);

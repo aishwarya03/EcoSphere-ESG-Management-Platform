@@ -3,12 +3,51 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-model Test {
-  id        Int      @id @default(autoincrement())
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  email    String  @unique
+  username String? @unique
+
+  passwordHash String?
+
+  role   Role       @default(EMPLOYEE)
+  status UserStatus @default(PENDING)
+
+  inviteTokenHash      String?   @unique
+  inviteTokenExpiresAt DateTime?
+
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
 }
