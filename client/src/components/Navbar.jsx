@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Leaf } from 'lucide-react';
 import Button from './Button';
+import { useAuth } from '../context/useAuth';
+import { useAuthCta } from '../hooks/useAuthCta';
 
 const links = [
   { href: '#pillars', label: 'Modules' },
@@ -9,6 +11,9 @@ const links = [
 ];
 
 const Navbar = () => {
+  const { isAuthenticated } = useAuth();
+  const cta = useAuthCta();
+
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border-subtle bg-canvas/70 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -34,14 +39,16 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link
-            to="/login"
-            className="hidden text-sm font-medium text-ink-200 transition-colors hover:text-primary-400 sm:block"
-          >
-            Sign in
-          </Link>
-          <Button as={Link} to="/register" size="sm" variant="primary">
-            Get Started
+          {!isAuthenticated && (
+            <Link
+              to="/login"
+              className="hidden text-sm font-medium text-ink-200 transition-colors hover:text-primary-400 sm:block"
+            >
+              Sign in
+            </Link>
+          )}
+          <Button as={Link} to={cta.to} size="sm" variant="primary">
+            {cta.label}
           </Button>
         </div>
       </nav>

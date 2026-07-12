@@ -5,8 +5,13 @@ import Button from '../Button';
 import HeroBackground from './HeroBackground';
 import ScoreGauge from './ScoreGauge';
 import FloatingMetrics from './FloatingMetrics';
+import { useAuth } from '../../context/useAuth';
+import { useAuthCta } from '../../hooks/useAuthCta';
 
 const Hero = () => {
+  const { isAuthenticated } = useAuth();
+  const cta = useAuthCta();
+
   return (
     <section
       id="top"
@@ -49,12 +54,20 @@ const Hero = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mt-8 flex flex-wrap items-center justify-center gap-4"
         >
-          <Button as={Link} to="/register" size="lg" variant="primary">
-            Get Started <ArrowRight size={18} />
-          </Button>
-          <Button as={Link} to="/dashboard" size="lg" variant="secondary">
-            <LayoutDashboard size={18} /> Explore Dashboard
-          </Button>
+          {isAuthenticated ? (
+            <Button as={Link} to={cta.to} size="lg" variant="primary">
+              <LayoutDashboard size={18} /> {cta.label}
+            </Button>
+          ) : (
+            <>
+              <Button as={Link} to="/register" size="lg" variant="primary">
+                Get Started <ArrowRight size={18} />
+              </Button>
+              <Button as={Link} to="/dashboard" size="lg" variant="secondary">
+                <LayoutDashboard size={18} /> Explore Dashboard
+              </Button>
+            </>
+          )}
         </motion.div>
 
         <motion.div

@@ -15,3 +15,6 @@ export const importUsers = (file) => {
 
 export const listUsers = () =>
   apiClient.get('/api/users').then((res) => res.data);
+
+export const getMyProfile = () =>
+  apiClient.get('/api/users/me/profile').then((res) => res.data);

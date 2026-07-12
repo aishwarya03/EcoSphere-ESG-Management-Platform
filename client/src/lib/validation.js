@@ -238,6 +238,92 @@ export const updateRewardSchema = createRewardSchema.extend({
   status: z.enum(['ACTIVE', 'INACTIVE']),
 });
 
+export const carbonTransactionSchema = z.object({
+  departmentId: optionalId,
+  emissionFactorId: z.string().trim().min(1, 'Required'),
+  quantity: z.coerce.number({ invalid_type_error: 'Required' }).positive('Must be greater than 0'),
+  transactionDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  notes: z.string().trim().max(2000, 'Too long').optional(),
+});
+
+const csrActivityFields = {
+  title: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  categoryId: optionalId,
+  departmentId: optionalId,
+  pointsValue: z.coerce
+    .number({ invalid_type_error: 'Required' })
+    .int('Whole numbers only')
+    .positive('Must be greater than 0'),
+  startDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  endDate: optionalDate,
+};
+export const createCsrActivitySchema = z
+  .object(csrActivityFields)
+  .refine(dateRangeCheck('startDate', 'endDate'), {
+    message: 'Start date must be before end date',
+    path: ['endDate'],
+  });
+export const updateCsrActivitySchema = z
+  .object({ ...csrActivityFields, status: z.enum(['ACTIVE', 'INACTIVE']) })
+  .refine(dateRangeCheck('startDate', 'endDate'), {
+    message: 'Start date must be before end date',
+    path: ['endDate'],
+  });
+
+export const createParticipationSchema = z.object({
+  csrActivityId: z.string().trim().min(1, 'Required'),
+  proof: z.string().trim().max(2000, 'Too long').optional(),
+  completionDate: z.coerce.date({ invalid_type_error: 'Required' }),
+});
+export const reviewParticipationSchema = z.object({
+  approvalStatus: z.enum(['APPROVED', 'REJECTED']),
+  pointsEarned: optionalNumber,
+});
+
+export const challengeSchema = z.object({
+  title: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  categoryId: optionalId,
+  xp: z.coerce.number({ invalid_type_error: 'Required' }).int('Whole numbers only').positive('Must be greater than 0'),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
+  evidenceRequired: z.boolean(),
+  deadline: z.coerce.date({ invalid_type_error: 'Required' }),
+  status: z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'COMPLETED', 'ARCHIVED']),
+});
+
+export const createChallengeParticipationSchema = z.object({
+  challengeId: z.string().trim().min(1, 'Required'),
+  proof: z.string().trim().max(2000, 'Too long').optional(),
+  progress: z.preprocess(
+    (v) => (v === '' || v === undefined ? undefined : Number(v)),
+    z.number().int().min(0, 'Min 0').max(100, 'Max 100').optional()
+  ),
+});
+export const reviewChallengeParticipationSchema = z.object({
+  approvalStatus: z.enum(['APPROVED', 'REJECTED']),
+  xpAwarded: optionalNumber,
+});
+
+export const auditSchema = z.object({
+  title: z.string().trim().min(1, 'Required').max(120, 'Too long'),
+  description: z.string().trim().max(2000, 'Too long').optional(),
+  departmentId: optionalId,
+  auditor: z.string().trim().max(120, 'Too long').optional(),
+  auditDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED']),
+  findingsSummary: z.string().trim().max(4000, 'Too long').optional(),
+});
+
+export const complianceIssueSchema = z.object({
+  auditId: z.string().trim().min(1, 'Required'),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  description: z.string().trim().min(1, 'Required').max(2000, 'Too long'),
+  ownerId: z.string().trim().min(1, 'Required'),
+  dueDate: z.coerce.date({ invalid_type_error: 'Required' }),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+});
+
 export const XLSX_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
